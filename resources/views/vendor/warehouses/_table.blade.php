@@ -1,0 +1,31 @@
+<tbody>
+    @forelse($warehouses as $warehouse)
+    <tr>
+        <td>{{ ($warehouses->currentPage() - 1) * $warehouses->perPage() + $loop->iteration }}</td>
+        <td>{{ $warehouse->name }}</td>
+        <td>{{ $warehouse->city }}</td>
+        <td>{{ $warehouse->state }}</td>
+        <td>{{ $warehouse->products_count }}</td>
+        <td>{{ $warehouse->created_at->format('d-m-Y') }}</td>
+        <td>
+            <button class="btn btn-sm btn-warning edit-warehouse" 
+                    data-id="{{ $warehouse->id }}" 
+                    data-info="{{ json_encode($warehouse->only(['name','address','city','state','pincode'])) }}">
+                <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-danger delete-warehouse" data-id="{{ $warehouse->id }}">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+    @empty
+    <tr>
+        <td colspan="7" class="text-center">No records found.</td>
+    </tr>
+    @endforelse
+</tbody>
+<tfoot>
+    
+            <x-custom-pagination :paginator="$warehouses" />
+       
+</tfoot>

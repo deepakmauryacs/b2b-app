@@ -1,0 +1,453 @@
+<?php
+
+namespace App\Http\Controllers\Vendor;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Category;
+use App\Models\Warehouse;
+use App\Models\WarehouseProduct;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
+use Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+
+class VendorProductController extends Controller
+{
+
+    // Show vendor's all products
+    public function index()
+    {
+        return view('vendor.products.index', [
+            'pageTitle' => 'All Product List'
+        ]);
+    }
+
+    // Show approved products list
+    public function approved()
+    {
+        return view('vendor.products.index', [
+            'statusDefault' => 'approved',
+            'pageTitle' => 'Approved Products'
+        ]);
+    }
+
+    // Show pending products list
+    public function pending()
+    {
+        return view('vendor.products.index', [
+            'statusDefault' => 'pending',
+            'pageTitle' => 'Pending Products'
+        ]);
+    }
+
+    // Show rejected products list
+    public function rejected()
+    {
+        return view('vendor.products.index', [
+            'statusDefault' => 'rejected',
+            'pageTitle' => 'Rejected Products'
+        ]);
+    }
+
+    // Fetch products for DataTable
+    public function getProducts(Request $request)
+    {
+        $query = Product::where('vendor_id', Auth::id());
+
+        if ($request->filled('product_name')) {
+            $query->where('product_name', 'like', '%' . $request->product_name . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $products = $query->latest();
+
+        return DataTables::of($products)
+            ->addIndexColumn()
+            ->editColumn('product_image', function ($product) {
+                return $product->product_image
+                    ? '<img src="' . asset('storage/' . $product->product_image) . '" width="50">'
+                    : 'N/A';
+            })
+           ->editColumn('status', function ($product) {
+                // Determine the badge classes based on status
+                if ($product->status === 'approved') {
+                    $class = 'badge border border-success text-success px-2 py-1 fs-13';
+                } elseif ($product->status === 'pending') {
+                    $class = 'badge border border-warning text-warning px-2 py-1 fs-13';
+                } else { // 'rejected' or any other status
+                    $class = 'badge border border-danger text-danger px-2 py-1 fs-13';
+                }
+
+                // Return the span with the appropriate classes
+                return '<span class="'. $class .'">'. ucfirst($product->status) .'</span>';
+            })
+            ->editColumn('created_at', function ($product) {
+                return Carbon::parse($product->created_at)->format('d-m-Y');
+            })
+
+            ->addColumn('action', function ($product) {
+                return '
+                    <a href="' . route('vendor.products.show', $product->id) . '" class="btn btn-sm btn-soft-info me-1 view-product">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="' . route('vendor.products.edit', $product->id) . '" class="btn btn-sm btn-soft-warning me-1">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-sm btn-soft-danger delete-product" data-id="' . $product->id . '">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                ';
+            })
+            ->rawColumns(['product_image', 'status', 'action'])
+            ->make(true);
+    }
+
+    // Render paginated products table for AJAX requests
+    public function renderProductsTable(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'product_name' => 'nullable|string|max:200',
+            'status' => 'nullable|in:approved,pending,rejected',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 0,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $perPage = $request->input('per_page', 10);
+
+        $productsQuery = Product::where('vendor_id', Auth::id());
+
+        if ($request->filled('product_name')) {
+            $productsQuery->where('product_name', 'like', '%' . $request->product_name . '%');
+        }
+
+        if ($request->filled('status')) {
+            $productsQuery->where('status', $request->status);
+        }
+
+        $products = $productsQuery->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return view('vendor.products._products_table', compact('products'));
+    }
+
+    // Show create product form
+    public function create()
+    {
+        // Fetch active categories
+        $categories = DB::table('categories')
+            ->where('status', 1)->where('parent_id', 0)
+            ->orderBy('name', 'ASC')
+            ->get();
+        $warehouses = Auth::user()->warehouses()->orderBy('name')->get();
+        return view('vendor.products.create', compact('categories', 'warehouses'));
+    }
+
+    public function getSubcategories($parentId)
+    {
+        $subcategories = DB::table('categories')
+                            ->where('parent_id', $parentId)
+                            ->where('status', 1)
+                            ->orderBy('name', 'ASC')
+                            ->get();
+
+        return response()->json($subcategories);
+    }
+
+
+    // Save product
+    public function store(Request $request)
+    {
+        // Validate the request data
+        $validator = Validator::make($request->all(), [
+            'product_name' => 'required|string|max:200',
+            'price' => 'required|numeric|min:0',
+            'slug' => 'nullable|string|unique:products,slug',
+            'product_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'nullable|exists:categories,id',
+            'description' => 'nullable|string',
+            'unit' => 'nullable|string|max:50',
+            'min_order_qty' => 'nullable|integer|min:1',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'hsn_code' => 'nullable|string|max:50',
+            'gst_rate' => 'nullable|numeric|min:0|max:100',
+            'warehouse_id' => 'required|exists:warehouses,id',
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['status' => 0, 'message' => $validator->errors()->first()]);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $product = new Product();
+
+            // Sanitize input data
+            $product_name = strip_tags(trim($request->product_name));
+            $slug = $request->slug ? strip_tags(trim($request->slug)) : Str::slug($product_name);
+            $description = $request->description ? strip_tags(trim($request->description)) : null;
+            $unit = $request->unit ? strip_tags(trim($request->unit)) : null;
+            $hsn_code = $request->hsn_code ? strip_tags(trim($request->hsn_code)) : null;
+
+            // Set product properties
+            $product->vendor_id = Auth::id();
+            $product->category_id = $request->category_id;
+            $product->sub_category_id = $request->sub_category_id;
+            $product->product_name = $product_name;
+            $product->slug = $slug;
+            $product->description = $description;
+            $product->price = $request->price;
+            $product->unit = $unit;
+            $product->min_order_qty = $request->min_order_qty ?? 1;
+            $product->hsn_code = $hsn_code;
+            $product->gst_rate = $request->gst_rate;
+            $product->status = 'pending';
+
+            // Handle image upload
+            if ($request->hasFile('product_image')) {
+                $product->product_image = $request->file('product_image')->store('uploads/products', 'public');
+            }
+
+            $product->save();
+
+            $warehouse = Warehouse::where('id', $request->warehouse_id)
+                ->where('vendor_id', Auth::id())
+                ->first();
+
+            if ($warehouse) {
+                WarehouseProduct::updateOrCreate([
+                    'warehouse_id' => $warehouse->id,
+                    'product_id' => $product->id,
+                ], [
+                    'quantity' => $product->stock_quantity,
+                ]);
+            }
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'status' => 1,
+                    'message' => 'Product added successfully!',
+                    'redirect' => route('vendor.products.index')
+                ]);
+            }
+
+
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'status' => 0,
+                    'message' => 'Failed to add product: ' . $e->getMessage()
+                ]);
+            }
+        }
+    }
+
+
+    // Show edit form
+    public function edit($id)
+    {
+        $product = Product::where('id', $id)->where('vendor_id', Auth::id())->firstOrFail();
+        $categories = DB::table('categories')
+            ->where('status', 1)->where('parent_id', 0)
+            ->orderBy('name', 'ASC')
+            ->get();
+        $subCategories = array();
+        $warehouses = Auth::user()->warehouses()->orderBy('name')->get();
+        return view('vendor.products.edit', compact('product', 'categories','subCategories', 'warehouses'));
+    }
+
+    // Update product
+    public function update(Request $request, $id)
+    {
+        $product = Product::where('id', $id)->where('vendor_id', Auth::id())->firstOrFail();
+
+        try {
+            $validatedData = $request->validate([
+                'product_name' => 'required|string|max:200',
+                'price' => 'required|numeric|min:0',
+                'slug' => 'nullable|string|unique:products,slug,' . $product->id,
+                'product_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            ]);
+
+            // Update product with validated data
+            $product->category_id = $request->category_id;
+            $product->sub_category_id = $request->sub_category_id;
+            $product->product_name = $validatedData['product_name'];
+            $product->slug = $validatedData['slug'] ?? Str::slug($validatedData['product_name']);
+            $product->description = $request->description;
+            $product->price = $validatedData['price'];
+            $product->unit = $request->unit;
+            $product->min_order_qty = $request->min_order_qty ?? 1;
+            $product->hsn_code = $request->hsn_code;
+            $product->gst_rate = $request->gst_rate;
+
+
+            // Handle product_image upload
+            if ($request->hasFile('product_image')) {
+                $productImageFile = $request->file('product_image');
+                $productImageName = uniqid('prod_') . '.' . $productImageFile->getClientOriginalExtension();
+                $productImagePath = public_path('uploads/products');
+
+                if (!file_exists($productImagePath)) {
+                    mkdir($productImagePath, 0777, true);
+                }
+
+                $productImageFile->move($productImagePath, $productImageName);
+
+                $product->product_image = 'uploads/products/' . $productImageName;
+            }
+
+
+            $product->save();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'status' => 1,
+                    'message' => 'Product updated successfully!',
+                    'redirect' => route('vendor.products.index')
+                ]);
+            }
+
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'status' => 0,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            throw $e; // Re-throw the exception for non-AJAX requests
+        }
+    }
+
+    // Show product details
+    public function show($id)
+    {
+        $product = Product::where('id', $id)
+            ->where('vendor_id', Auth::id())
+            ->firstOrFail();
+
+        return view('vendor.products.show', compact('product'));
+    }
+
+    // Delete product
+    public function destroy($id)
+    {
+        $product = Product::where('id', $id)
+            ->where('vendor_id', Auth::id())
+            ->firstOrFail();
+
+        try {
+            $product->delete();
+
+            return response()->json([
+                'status' => 1,
+                'message' => 'Product deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Failed to delete product: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Initialize export by returning total count and chunk size
+    public function exportInit(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'nullable|in:approved,pending,rejected',
+            'product_name' => 'nullable|string|max:200',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 0,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $query = Product::where('vendor_id', Auth::id());
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('product_name')) {
+            $query->where('product_name', 'like', '%' . $request->product_name . '%');
+        }
+
+        $total = $query->count();
+
+        return response()->json([
+            'total' => $total,
+            'chunk_size' => 500,
+        ]);
+    }
+
+    // Provide product data as JSON in chunks for export via AJAX
+    public function exportData(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'offset' => 'nullable|integer|min:0',
+            'limit' => 'nullable|integer|min:1|max:500',
+            'status' => 'nullable|in:approved,pending,rejected',
+            'product_name' => 'nullable|string|max:200',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $offset = (int) $request->input('offset', 0);
+        $limit = (int) $request->input('limit', 500);
+
+        $productsQuery = Product::where('vendor_id', Auth::id());
+
+        if ($request->filled('status')) {
+            $productsQuery->where('status', $request->status);
+        }
+
+        if ($request->filled('product_name')) {
+            $productsQuery->where('product_name', 'like', '%' . $request->product_name . '%');
+        }
+
+        $products = $productsQuery->orderBy('id')
+            ->skip($offset)
+            ->take($limit)
+            ->get();
+
+        $data = $products->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'product_name' => $product->product_name,
+                'price' => $product->price,
+                'quantity' => $product->stock_quantity,
+                'status' => $product->status,
+                'created_at' => $product->created_at->format('d-m-Y'),
+            ];
+        });
+
+        return response()->json($data);
+    }
+}
