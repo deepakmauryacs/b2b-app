@@ -215,6 +215,7 @@ class VendorProductController extends Controller
             $product->price = $request->price;
             $product->unit = $unit;
             $product->min_order_qty = $request->min_order_qty ?? 1;
+            $product->stock_quantity = $request->stock_quantity ?? 0;
             $product->hsn_code = $hsn_code;
             $product->gst_rate = $request->gst_rate;
             $product->status = 'pending';

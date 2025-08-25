@@ -34,55 +34,21 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <style>
-    .bi-bell,
-    .bi-gear {
-        font-size: 20px;
-    }
-    .scrollbar .nav-icon i,
-    #navbar-nav .nav-icon i {
-        font-size: 20px !important;
-        line-height: 1;
-        vertical-align: middle;
-    }
-    /* Preloader styles */
-    #preloader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #ffffff;
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: opacity 0.5s ease;
-    }
-    #preloader .spinner {
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #3498db;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    #preloader.hidden {
-        opacity: 0;
-        visibility: hidden;
-    }
+    .bi-bell,.bi-gear{ font-size:20px; }
+    .scrollbar .nav-icon i,#navbar-nav .nav-icon i{ font-size:20px !important; line-height:1; vertical-align:middle; }
+    /* Preloader */
+    #preloader{ position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:9999; display:flex; justify-content:center; align-items:center; transition:opacity .5s ease; }
+    #preloader .spinner{ border:5px solid #f3f3f3; border-top:5px solid #3498db; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; }
+    @keyframes spin{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+    #preloader.hidden{ opacity:0; visibility:hidden; }
 </style>
 
 @stack('styles')
 </head>
 <body>
 <!-- Preloader -->
-<div id="preloader">
-    <div class="spinner"></div>
-</div>
+<div id="preloader"><div class="spinner"></div></div>
+
 <div class="wrapper">
     <!-- Topbar -->
     <header class="topbar">
@@ -114,44 +80,34 @@
                         <div class="dropdown-menu py-0 dropdown-lg dropdown-menu-end" aria-labelledby="page-header-notifications-dropdown">
                             <div class="p-3 border-top-0 border-start-0 border-end-0 border-dashed border">
                                 <div class="row align-items-center">
-                                    <div class="col">
-                                        <h6 class="m-0 fs-16 fw-semibold"> Notifications</h6>
-                                    </div>
-                                    <div class="col-auto">
-                                        <a href="javascript:void(0);" class="text-dark text-decoration-underline">
-                                            <small>Clear All</small>
-                                        </a>
-                                    </div>
+                                    <div class="col"><h6 class="m-0 fs-16 fw-semibold"> Notifications</h6></div>
+                                    <div class="col-auto"><a href="javascript:void(0);" class="text-dark text-decoration-underline"><small>Clear All</small></a></div>
                                 </div>
                             </div>
                             <div data-simplebar style="max-height: 280px;">
                                 @foreach([
-                                    ['name' => 'Josephine Thompson', 'avatar' => 'avatar-1.jpg', 'message' => 'commented on admin panel <span>" Wow 😍! this admin looks good and awesome design"</span>'],
-                                    ['name' => 'Donoghue Susan', 'avatar' => 'D', 'message' => 'Hi, How are you? What about our next meeting'],
-                                    ['name' => 'Jacob Gines', 'avatar' => 'avatar-3.jpg', 'message' => 'Answered to your comment on the cash flow forecast\'s graph 🔔.'],
-                                    ['name' => null, 'avatar' => 'iconamoon:comment-dots-duotone', 'message' => 'You have received <b>20</b> new messages in the conversation'],
-                                    ['name' => 'Shawn Bunch', 'avatar' => 'avatar-5.jpg', 'message' => 'Commented on Admin']
-                                ] as $notification)
+                                    ['name'=>'Josephine Thompson','avatar'=>'avatar-1.jpg','message'=>'commented on admin panel <span>" Wow 😍! this admin looks good and awesome design"</span>'],
+                                    ['name'=>'Donoghue Susan','avatar'=>'D','message'=>'Hi, How are you? What about our next meeting'],
+                                    ['name'=>'Jacob Gines','avatar'=>'avatar-3.jpg','message'=>'Answered to your comment on the cash flow forecast\'s graph 🔔.'],
+                                    ['name'=>null,'avatar'=>'iconamoon:comment-dots-duotone','message'=>'You have received <b>20</b> new messages in the conversation'],
+                                    ['name'=>'Shawn Bunch','avatar'=>'avatar-5.jpg','message'=>'Commented on Admin']
+                                ] as $n)
                                     <a href="javascript:void(0);" class="dropdown-item py-3 border-bottom text-wrap">
                                         <div class="d-flex">
                                             <div class="flex-shrink-0">
-                                                @if(strpos($notification['avatar'], '.jpg') !== false)
-                                                    <img src="{{ asset('assets/images/users/' . $notification['avatar']) }}" class="img-fluid me-2 avatar-sm rounded-circle" alt="{{ $notification['avatar'] }}" />
+                                                @if(strpos($n['avatar'], '.jpg') !== false)
+                                                    <img src="{{ asset('assets/images/users/' . $n['avatar']) }}" class="img-fluid me-2 avatar-sm rounded-circle" alt="{{ $n['avatar'] }}" />
                                                 @else
                                                     <div class="avatar-sm me-2">
-                                                        <span class="avatar-title bg-soft-{{ $notification['avatar'] == 'D' ? 'info text-info' : 'warning text-warning' }} fs-20 rounded-circle">
-                                                            {{ $notification['avatar'] == 'D' ? 'D' : '<iconify-icon icon="' . $notification['avatar'] . '"></iconify-icon>' }}
+                                                        <span class="avatar-title bg-soft-{{ $n['avatar']=='D' ? 'info text-info' : 'warning text-warning' }} fs-20 rounded-circle">
+                                                            {{ $n['avatar']=='D' ? 'D' : '' }}
+                                                            @if($n['avatar']!=='D')<iconify-icon icon="{{ $n['avatar'] }}"></iconify-icon>@endif
                                                         </span>
                                                     </div>
                                                 @endif
                                             </div>
                                             <div class="flex-grow-1">
-                                                <p class="mb-0">
-                                                    @if($notification['name'])
-                                                        <span class="fw-medium">{{ $notification['name'] }}</span>
-                                                    @endif
-                                                    {!! $notification['message'] !!}
-                                                </p>
+                                                <p class="mb-0">@if($n['name'])<span class="fw-medium">{{ $n['name'] }}</span> @endif {!! $n['message'] !!}</p>
                                             </div>
                                         </div>
                                     </a>
@@ -168,7 +124,7 @@
                             <i class="bi bi-gear"></i>
                         </button>
                     </div>
-                   
+
                     <!-- User -->
                     <div class="dropdown topbar-item">
                         <a type="button" class="topbar-button" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -178,29 +134,15 @@
                         </a>
                         <div class="dropdown-menu dropdown-menu-end">
                             <h6 class="dropdown-header">Welcome {{ Auth::user()->name ?? 'Gaston' }}!</h6>
-                            
                             <a class="dropdown-item" href="{{ route('vendor.profile.show') }}">
                                 <i class="bx bx-user-circle text-muted fs-18 align-middle me-1"></i><span class="align-middle">Profile</span>
                             </a>
-                            
-                            <a class="dropdown-item" href="#">
-                                <i class="bx bx-help-circle text-muted fs-18 align-middle me-1"></i><span class="align-middle">Help</span>
-                            </a>
-                           
+                            <a class="dropdown-item" href="#"><i class="bx bx-help-circle text-muted fs-18 align-middle me-1"></i><span class="align-middle">Help</span></a>
                             <div class="dropdown-divider my-1"></div>
-                            <!-- Logout Link -->
-                            <a class="dropdown-item text-danger"
-                               href="#"
-                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="bx bx-log-out fs-18 align-middle me-1"></i>
-                                <span class="align-middle">Logout</span>
+                            <a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="bx bx-log-out fs-18 align-middle me-1"></i><span class="align-middle">Logout</span>
                             </a>
-
-                            <!-- Hidden Logout Form -->
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                @csrf
-                            </form>
-
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form>
                         </div>
                     </div>
                 </div>
@@ -208,9 +150,7 @@
         </div>
     </header>
 
-    
-
-    <!-- Theme Settings -->
+    <!-- Theme Settings Offcanvas -->
     <div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
         <div class="d-flex align-items-center bg-primary p-3 offcanvas-header">
             <h5 class="text-white m-0">Theme Settings</h5>
@@ -221,69 +161,32 @@
                 <div class="p-3 settings-bar">
                     <div>
                         <h5 class="mb-3 font-16 fw-semibold">Color Scheme</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-light" value="light">
-                            <label class="form-check-label" for="layout-color-light">Light</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-dark" value="dark">
-                            <label class="form-check-label" for="layout-color-dark">Dark</label>
-                        </div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-light" value="light"><label class="form-check-label" for="layout-color-light">Light</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-dark" value="dark"><label class="form-check-label" for="layout-color-dark">Dark</label></div>
                     </div>
                     <div>
                         <h5 class="my-3 font-16 fw-semibold">Topbar Color</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-topbar-color" id="topbar-color-light" value="light">
-                            <label class="form-check-label" for="topbar-color-light">Light</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-topbar-color" id="topbar-color-dark" value="dark">
-                            <label class="form-check-label" for="topbar-color-dark">Dark</label>
-                        </div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-topbar-color" id="topbar-color-light" value="light"><label class="form-check-label" for="topbar-color-light">Light</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-topbar-color" id="topbar-color-dark" value="dark"><label class="form-check-label" for="topbar-color-dark">Dark</label></div>
                     </div>
                     <div>
                         <h5 class="my-3 font-16 fw-semibold">Menu Color</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-color" id="leftbar-color-light" value="light">
-                            <label class="form-check-label" for="leftbar-color-light">Light</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-color" id="leftbar-color-dark" value="dark">
-                            <label class="form-check-label" for="leftbar-color-dark">Dark</label>
-                        </div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-color" id="leftbar-color-light" value="light"><label class="form-check-label" for="leftbar-color-light">Light</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-color" id="leftbar-color-dark" value="dark"><label class="form-check-label" for="leftbar-color-dark">Dark</label></div>
                     </div>
                     <div>
                         <h5 class="my-3 font-16 fw-semibold">Sidebar Size</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-default" value="default">
-                            <label class="form-check-label" for="leftbar-size-default">Default</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-small" value="condensed">
-                            <label class="form-check-label" for="leftbar-size-small">Condensed</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-hidden" value="hidden">
-                            <label class="form-check-label" for="leftbar-hidden">Hidden</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-small-hover-active" value="sm-hover-active">
-                            <label class="form-check-label" for="leftbar-size-small-hover-active">Small Hover Active</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-small-hover" value="sm-hover">
-                            <label class="form-check-label" for="leftbar-size-small-hover">Small Hover</label>
-                        </div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-default" value="default"><label class="form-check-label" for="leftbar-size-default">Default</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-small" value="condensed"><label class="form-check-label" for="leftbar-size-small">Condensed</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-hidden" value="hidden"><label class="form-check-label" for="leftbar-hidden">Hidden</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-small-hover-active" value="sm-hover-active"><label class="form-check-label" for="leftbar-size-small-hover-active">Small Hover Active</label></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="data-menu-size" id="leftbar-size-small-hover" value="sm-hover"><label class="form-check-label" for="leftbar-size-small-hover">Small Hover</label></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="offcanvas-footer border-top p-3 text-center">
-            <div class="row">
-                <div class="col">
-                    <button type="button" class="btn btn-danger w-100" id="reset-layout">Reset</button>
-                </div>
-            </div>
+            <div class="row"><div class="col"><button type="button" class="btn btn-danger w-100" id="reset-layout">Reset</button></div></div>
         </div>
     </div>
 
@@ -302,61 +205,129 @@
         <button type="button" class="button-sm-hover" aria-label="Show Full Sidebar">
             <iconify-icon icon="solar:double-alt-arrow-right-bold-duotone" class="button-sm-hover-icon"></iconify-icon>
         </button>
+
         <div class="scrollbar" data-simplebar>
             <ul class="navbar-nav" id="navbar-nav">
                 <li class="menu-title">General</li>
+
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('vendor.dashboard') }}">
                         <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
                         <span class="nav-text"> Dashboard </span>
                     </a>
                 </li>
-                @foreach([
-                    ['title' => 'Products', 'icon' => 'bi-box-seam', 'id' => 'sidebarProducts', 'items' => [
-                        ['name' => 'Add Product ', 'route' => 'vendor.products.create'],
-                        ['name' => 'Product List', 'route' => 'vendor.products.index'],
-                        ['name' => 'Approved Products', 'route' => 'vendor.products.approved'],
-                        ['name' => 'Pending Products', 'route' => 'vendor.products.pending'],
-                        ['name' => 'Rejected Products', 'route' => 'vendor.products.rejected'],
-                    ]],
-                    ['title' => 'Inventory Management', 'icon' => 'bi-stack', 'id' => 'sidebarInventory', 'items' => [
-                        ['name' => 'Inventory List', 'route' => 'vendor.inventory.index'],
-                    ]],
-                    ['title' => 'Warehouses', 'icon' => 'bi-building', 'id' => 'sidebarWarehouses', 'items' => [
-                        ['name' => 'Warehouse List', 'route' => 'vendor.warehouses.index'],
-                    ]],
-                    ['title' => 'Help & Support', 'icon' => 'bi-question-circle', 'id' => 'sidebarHelpSupport', 'items' => [
-                        ['name' => 'Add Request', 'route' => 'vendor.help-support.create'],
-                        ['name' => 'Request List', 'route' => 'vendor.help-support.index'],
-                    ]],
-                    ['title' => 'Settings', 'icon' => 'bi-gear', 'id' => 'sidebarSettings', 'items' => [
-                        ['name' => 'Profile', 'route' => 'vendor.profile.show'],
-                        ['name' => 'Change Password', 'route' => 'vendor.password.edit'],
-                    ]]
 
-                ] as $menu)
-                    <li class="nav-item">
-                        <a class="nav-link menu-arrow" href="#{{ $menu['id'] }}" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="{{ $menu['id'] }}">
-                            <span class="nav-icon">
-                                <i class="bi {{ strpos($menu['icon'], 'solar:') === 0 ? 'iconify' : $menu['icon'] }}" 
-                                   @if(strpos($menu['icon'], 'solar:') === 0) data-icon="{{ $menu['icon'] }}" @endif>
-                                </i>
-                            </span>
-                            <span class="nav-text"> {{ $menu['title'] }} </span>
-                        </a>
-                        <div class="collapse" id="{{ $menu['id'] }}">
-                            <ul class="nav sub-navbar-nav">
-                                @foreach($menu['items'] as $item)
-                                    <li class="sub-nav-item">
-                                        <a class="sub-nav-link" href="{{ route($item['route']) }}">{{ $item['name'] }}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </li>
-                @endforeach
-                
-                <!-- Additional sidebar items can be added similarly -->
+                {{-- PRODUCTS MENU (with Approved/Pending/Rejected badges) --}}
+                <li class="nav-item">
+                    <a class="nav-link menu-arrow" href="#sidebarProducts" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarProducts">
+                        <span class="nav-icon"><i class="bi bi-box-seam"></i></span>
+                        <span class="nav-text"> Products </span>
+                    </a>
+                    <div class="collapse" id="sidebarProducts">
+                        <ul class="nav sub-navbar-nav">
+
+                            {{-- Add Product --}}
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link {{ request()->routeIs('vendor.products.create') ? 'active' : '' }}" href="{{ route('vendor.products.create') }}">
+                                    <span class="nav-text">Add Product</span>
+                                </a>
+                            </li>
+
+                            {{-- Product List --}}
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link {{ request()->routeIs('vendor.products.index') ? 'active' : '' }}" href="{{ route('vendor.products.index') }}">
+                                    <span class="nav-text">Product List</span>
+                                </a>
+                            </li>
+
+                            {{-- Approved --}}
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link d-flex align-items-center justify-content-between {{ request()->routeIs('admin.products.approved*') ? 'active' : '' }}"
+                                   href="{{ route('admin.products.approved') }}">
+                                    <span class="nav-text">Products</span>
+                                    <span class="badge bg-success-subtle text-success py-1 px-2">Approved</span>
+                                </a>
+                            </li>
+
+                            {{-- Pending --}}
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link d-flex align-items-center justify-content-between {{ request()->routeIs('admin.products.pending*') ? 'active' : '' }}"
+                                   href="{{ route('admin.products.pending') }}">
+                                    <span class="nav-text">Product</span>
+                                    <span class="badge bg-primary-subtle text-primary py-1 px-2">Pending</span>
+                                </a>
+                            </li>
+
+                            {{-- Rejected --}}
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link d-flex align-items-center justify-content-between {{ request()->routeIs('admin.products.rejected*') ? 'active' : '' }}"
+                                   href="{{ route('admin.products.rejected') }}">
+                                    <span class="nav-text">Products</span>
+                                    <span class="badge bg-danger-subtle text-danger py-1 px-2">Rejected</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                {{-- INVENTORY --}}
+                <li class="nav-item">
+                    <a class="nav-link menu-arrow" href="#sidebarInventory" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarInventory">
+                        <span class="nav-icon"><i class="bi bi-stack"></i></span>
+                        <span class="nav-text"> Inventory Management </span>
+                    </a>
+                    <div class="collapse" id="sidebarInventory">
+                        <ul class="nav sub-navbar-nav">
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link {{ request()->routeIs('vendor.inventory.index') ? 'active' : '' }}" href="{{ route('vendor.inventory.index') }}">Inventory List</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                {{-- WAREHOUSES --}}
+                <li class="nav-item">
+                    <a class="nav-link menu-arrow" href="#sidebarWarehouses" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarWarehouses">
+                        <span class="nav-icon"><i class="bi bi-building"></i></span>
+                        <span class="nav-text"> Warehouses </span>
+                    </a>
+                    <div class="collapse" id="sidebarWarehouses">
+                        <ul class="nav sub-navbar-nav">
+                            <li class="sub-nav-item">
+                                <a class="sub-nav-link {{ request()->routeIs('vendor.warehouses.index') ? 'active' : '' }}" href="{{ route('vendor.warehouses.index') }}">Warehouse List</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                {{-- HELP & SUPPORT --}}
+                <li class="nav-item">
+                    <a class="nav-link menu-arrow" href="#sidebarHelpSupport" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarHelpSupport">
+                        <span class="nav-icon"><i class="bi bi-question-circle"></i></span>
+                        <span class="nav-text"> Help & Support </span>
+                    </a>
+                    <div class="collapse" id="sidebarHelpSupport">
+                        <ul class="nav sub-navbar-nav">
+                            <li class="sub-nav-item"><a class="sub-nav-link {{ request()->routeIs('vendor.help-support.create') ? 'active' : '' }}" href="{{ route('vendor.help-support.create') }}">Add Request</a></li>
+                            <li class="sub-nav-item"><a class="sub-nav-link {{ request()->routeIs('vendor.help-support.index') ? 'active' : '' }}" href="{{ route('vendor.help-support.index') }}">Request List</a></li>
+                        </ul>
+                    </div>
+                </li>
+
+                {{-- SETTINGS --}}
+                <li class="nav-item">
+                    <a class="nav-link menu-arrow" href="#sidebarSettings" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSettings">
+                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                        <span class="nav-text"> Settings </span>
+                    </a>
+                    <div class="collapse" id="sidebarSettings">
+                        <ul class="nav sub-navbar-nav">
+                            <li class="sub-nav-item"><a class="sub-nav-link {{ request()->routeIs('vendor.profile.show') ? 'active' : '' }}" href="{{ route('vendor.profile.show') }}">Profile</a></li>
+                            <li class="sub-nav-item"><a class="sub-nav-link {{ request()->routeIs('vendor.password.edit') ? 'active' : '' }}" href="{{ route('vendor.password.edit') }}">Change Password</a></li>
+                        </ul>
+                    </div>
+                </li>
+
             </ul>
         </div>
     </div>
@@ -368,11 +339,11 @@
         </div>
         <footer class="footer">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <script>document.write(new Date().getFullYear())</script> © Larkon. Crafted by <iconify-icon icon="iconamoon:heart-duotone" class="fs-18 align-middle text-danger"></iconify-icon> <a href="https://1.envato.market/techzaa" class="fw-bold footer-text" target="_blank">Techzaa</a>
-                    </div>
-                </div>
+                <div class="row"><div class="col-12 text-center">
+                    <script>document.write(new Date().getFullYear())</script> © Larkon. Crafted by
+                    <iconify-icon icon="iconamoon:heart-duotone" class="fs-18 align-middle text-danger"></iconify-icon>
+                    <a href="https://1.envato.market/techzaa" class="fw-bold footer-text" target="_blank">Techzaa</a>
+                </div></div>
             </div>
         </footer>
     </div>
@@ -383,51 +354,32 @@
 <!-- App Javascript -->
 <script src="{{ asset('assets/js/app.js') }}"></script>
 
-<!-- Gridjs Plugin js -->
+<!-- Gridjs -->
 <script src="{{ asset('assets/vendor/gridjs/gridjs.umd.js') }}"></script>
-
-<!-- Gridjs Demo js -->
 <script src="{{ asset('assets/js/components/table-gridjs.js') }}"></script>
 
-
-<!-- Vector Map Js -->
+<!-- Vector Map -->
 <script src="{{ asset('assets/vendor/jsvectormap/js/jsvectormap.min.js') }}"></script>
 <script src="{{ asset('assets/vendor/jsvectormap/maps/world-merc.js') }}"></script>
 <script src="{{ asset('assets/vendor/jsvectormap/maps/world.js') }}"></script>
-<!-- Preloader Javascript -->
+
+<!-- Preloader hide -->
 <script>
-    window.addEventListener('load', function() {
-        const preloader = document.getElementById('preloader');
-        setTimeout(() => {
-            preloader.classList.add('hidden');
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500);
-        }, 300); // Delay for better UX
-    });
-</script>
-<script>
-$(function(){
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    if (typeof flatpickr !== 'undefined') {
-        $('.date-picker').flatpickr({ dateFormat: 'd-m-Y' });
-    }
+window.addEventListener('load', function(){
+    const preloader = document.getElementById('preloader');
+    setTimeout(()=>{ preloader.classList.add('hidden'); setTimeout(()=>{ preloader.style.display='none'; }, 500); }, 300);
 });
 </script>
+
+<!-- Global helpers -->
 <script>
-// Toastr global options
-toastr.options = {
-    "closeButton": true,           // Show close (×) button
-    "progressBar": true,           // Show progress bar
-    "positionClass": "toast-top-right", // Position of the toast
-    "timeOut": "5000",             // Auto-dismiss after 5 seconds
-    "extendedTimeOut": "1000"      // Extra time on hover
-};
+$(function(){
+    $.ajaxSetup({ headers:{ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+    if (typeof flatpickr !== 'undefined') { $('.date-picker').flatpickr({ dateFormat: 'd-m-Y' }); }
+});
+toastr.options = { closeButton:true, progressBar:true, positionClass:"toast-top-right", timeOut:"5000", extendedTimeOut:"1000" };
 </script>
+
 @stack('scripts')
 </body>
 </html>

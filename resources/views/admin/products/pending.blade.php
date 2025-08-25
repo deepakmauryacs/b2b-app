@@ -72,6 +72,61 @@
             </div>
         </div>
     </div>
+
+    {{-- ✅ Approve Confirmation Modal --}}
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-0">
+            <h5 class="modal-title" id="approveModalLabel">Approve Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="mb-0">
+              Are you sure you want to approve
+              <strong id="approveProductName">this product</strong>?
+            </p>
+          </div>
+
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" id="approveConfirmBtn" data-id="">
+              <i class="bi bi-check2-circle me-1"></i> Yes, Approve
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{-- ✅ Reject Confirmation Modal --}}
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="rejectModalLabel">Reject Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="mb-0">
+          Are you sure you want to reject 
+          <strong id="rejectProductName">this product</strong>?
+        </p>
+      </div>
+
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="rejectConfirmBtn" data-id="">
+          <i class="bi bi-x-circle me-1"></i> Yes, Reject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
@@ -233,5 +288,116 @@
                 cache: true
             }
         });
+        // --- Open Approve modal (delegated; tbody is dynamic) ---
+        // Open Approve Modal
+    $(document).on('click', '.btn-approve', function(){
+        const id   = $(this).data('id');
+        const name = $(this).data('name') || 'this product';
+
+        $('#approveProductName').text(name);
+        $('#approveConfirmBtn').attr('data-id', id);
+
+        const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+        modal.show();
+    });
+
+    // Confirm Approve
+    $(document).on('click', '#approveConfirmBtn', function(){
+    const $btn = $(this);
+    const id   = $btn.attr('data-id');
+
+    // Current page (for refresh after success)
+    let currentPage = 1;
+    const activePageLink = $('#products-table-foot-content .pagination .page-item.active .page-link').first().text();
+    if (activePageLink) currentPage = parseInt(activePageLink) || 1;
+
+    const prevHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Approving...');
+
+    $.ajax({
+        url: "{{ route('admin.products.pending.approve', ':id') }}".replace(':id', id),
+        type: 'PUT',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(resp){
+            const modalEl = document.getElementById('approveModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+
+            if(resp && resp.success){
+                toastr.success(resp.message || 'Product approved successfully!');
+                if (typeof fetchProductsData === 'function') {
+                    fetchProductsData(currentPage);
+                } else {
+                    location.reload();
+                }
+            } else {
+                toastr.error((resp && resp.message) || 'Failed to approve product.');
+            }
+        },
+        error: function(xhr){
+            toastr.error('An error occurred while approving. Please try again.');
+            console.error(xhr.responseText || xhr.statusText);
+        },
+        complete: function(){
+            $btn.prop('disabled', false).html(prevHtml);
+        }
+    });
+    });
+
+    // --- Open Reject modal ---
+$(document).on('click', '.btn-reject', function(){
+    const id   = $(this).data('id');
+    const name = $(this).data('name') || 'this product';
+
+    $('#rejectProductName').text(name);
+    $('#rejectConfirmBtn').attr('data-id', id);
+
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    modal.show();
+});
+
+// --- Confirm Reject ---
+$(document).on('click', '#rejectConfirmBtn', function(){
+    const $btn = $(this);
+    const id   = $btn.attr('data-id');
+
+    // Current page for refresh
+    let currentPage = 1;
+    const activePageLink = $('#products-table-foot-content .pagination .page-item.active .page-link').first().text();
+    if (activePageLink) currentPage = parseInt(activePageLink) || 1;
+
+    const prevHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Rejecting...');
+
+    $.ajax({
+        url: "{{ route('admin.products.pending.reject', ':id') }}".replace(':id', id),
+        type: 'PUT',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(resp){
+            const modalEl = document.getElementById('rejectModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+
+            if(resp && resp.success){
+                toastr.success(resp.message || 'Product rejected successfully!');
+                if (typeof fetchProductsData === 'function') {
+                    fetchProductsData(currentPage);
+                } else {
+                    location.reload();
+                }
+            } else {
+                toastr.error((resp && resp.message) || 'Failed to reject product.');
+            }
+        },
+        error: function(xhr){
+            toastr.error('An error occurred while rejecting. Please try again.');
+            console.error(xhr.responseText || xhr.statusText);
+        },
+        complete: function(){
+            $btn.prop('disabled', false).html(prevHtml);
+        }
+    });
+});
+
+
+
     </script>
 @endsection

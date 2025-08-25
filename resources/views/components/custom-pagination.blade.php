@@ -10,7 +10,9 @@
 
 <td colspan="10" class="text-center"> {{-- Adjust colspan as needed for your table --}}
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        
         {{-- Page Length Selector --}}
+        @if ($paginator->total() > 0)
         <form id="pageLengthForm" class="d-inline-block" style="margin-bottom:0;">
             <label for="perPage" class="me-2">Show</label>
             <select name="perPage" id="perPage" class="form-select form-select-sm d-inline-block w-auto"
@@ -23,6 +25,7 @@
             </select>
             <span class="ms-2">entries</span>
         </form>
+        @endif
 
         {{-- Custom Pagination Links --}}
         @if ($paginator->total() > 0)
