@@ -10,6 +10,25 @@
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" />
     <script src="{{ asset('assets/js/config.js') }}"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <style>
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .modal-header .btn-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+        }
+
+    </style>
 </head>
 <body class="h-100">
 <div class="d-flex flex-column h-100 p-3">
@@ -80,7 +99,8 @@
                                 </div>
 
                                 <div class="mb-1 text-center d-grid">
-                                    <button class="btn btn-soft-primary" type="submit">Register</button>
+                                    <button class="btn btn-soft-primary" id="show-registration-popup" type="button">Register</button>
+                                    <!-- <button class="btn btn-soft-primary" type="submit">Register</button> -->
                                 </div>
                             </form>
 
@@ -116,6 +136,46 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<!-- <div class="modal fade" id="user-registration" tabindex="-1" role="dialog" aria-labelledby="user-registration-label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="user-registration-label">Register Alert</h5>
+        <button type="button" class="close btn-close" data-dismiss="modal" aria-label="Close" onClick="closeRegisterModal()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        You are Registering as <span id="registring-as">Vendor</span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="closeRegisterModal()">Cancel</button>
+        <button type="submit" form="registerForm" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<div class="modal fade" id="user-registration" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="user-registrationLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="user-registrationLabel">Register Alert</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are Registering as <span id="registring-as" style="font-weight: 600;">Vendor</span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="registerForm" class="btn btn-primary">Register</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="{{ asset('assets/js/vendor.js') }}"></script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -291,7 +351,85 @@
                 $("#math-question").text(data.question);
             });
         });
+
+        $(document).on("click", "#show-registration-popup", function(){            
+            // if (isSubmitting) return false;
+            // isSubmitting = true;
+
+            // Clear previous errors
+            $(".is-invalid").removeClass("is-invalid");
+            $(".invalid-feedback").remove();
+            $formMessages.html("");
+
+            let valid = true;
+
+            // Validate role (radio)
+            valid = validateField($('input[name="role"]').last(), [
+                [!$('input[name="role"]:checked').val(), "Please select a role."]
+            ]) && valid;
+
+            // Validate name
+            const $name = $("#name");
+            const nameVal = $name.val().trim();
+            valid = validateField($name, [
+                [!nameVal, "Please enter your full name."],
+                [nameVal.length < 3, "Name must be at least 3 characters."]
+            ]) && valid;
+
+            // Validate email
+            const $email = $("#email");
+            const emailVal = $email.val().trim();
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            valid = validateField($email, [
+                [!emailVal, "Please enter your email."],
+                [!emailPattern.test(emailVal), "Please enter a valid email address."]
+            ]) && valid;
+
+            // Validate phone
+            const $phone = $("#phone");
+            const phoneVal = $phone.val().trim();
+            const phonePattern = /^\d{10,15}$/;
+            valid = validateField($phone, [
+                [!phoneVal, "Please enter your phone number."],
+                [!phonePattern.test(phoneVal), "Phone number must be 10-15 digits."]
+            ]) && valid;
+
+            // Validate password
+            const $password = $("#password");
+            const passwordVal = $password.val();
+            valid = validateField($password, [
+                [!passwordVal, "Please enter a password."],
+                [passwordVal.length < 6, "Password must be at least 6 characters."]
+            ]) && valid;
+
+            // Validate confirm password
+            const $passwordConfirmation = $("#password_confirmation");
+            valid = validateField($passwordConfirmation, [
+                [!$passwordConfirmation.val(), "Please confirm your password."],
+                [$passwordConfirmation.val() !== $password.val(), "Passwords do not match."]
+            ]) && valid;
+
+            // Validate captcha
+            const $captcha = $("#captcha");
+            const captchaVal = $captcha.val().trim();
+            valid = validateField($captcha, [
+                [!captchaVal, "Please answer the captcha."],
+                [!/^\d+$/.test(captchaVal), "Captcha answer must be a number."]
+            ]) && valid;
+            
+            if (valid){
+                $("#registring-as").html(($("#vendor").prop("checked") ? "Vendor" : "Buyer"));
+                // $("#user-registration").modal({
+                //     backdrop: false,   // disables backdrop
+                //     keyboard: false     // allows closing with ESC
+                // });
+                $("#user-registration").modal("show");
+            }
+        });        
     });
+    function closeRegisterModal() {
+        $("#user-registration").modal("hide");
+    }
 </script>
 </body>
 </html>
